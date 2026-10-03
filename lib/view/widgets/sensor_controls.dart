@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../l10n/app_localizations.dart';
 import '../../providers/locator.dart';
 import '../../theme/colors.dart';
@@ -81,9 +82,7 @@ class _SensorControlsWidgetState extends State<SensorControlsWidget> {
     return Container(
       decoration: BoxDecoration(
         color: cardBackgroundColor,
-        border: Border(
-          top: BorderSide(color: primaryRed, width: 2),
-        ),
+        border: Border(top: BorderSide(color: primaryRed, width: 2)),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.zero,
           topRight: Radius.zero,
@@ -105,9 +104,7 @@ class _SensorControlsWidgetState extends State<SensorControlsWidget> {
               children: [
                 _buildPlayPauseButton(),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: _buildNumberOfReadingsField(),
-                ),
+                Expanded(child: _buildNumberOfReadingsField()),
                 const SizedBox(width: 12),
                 _buildLoopButton(),
                 if (widget.onClearData != null || widget.onReset != null) ...[
@@ -125,23 +122,36 @@ class _SensorControlsWidgetState extends State<SensorControlsWidget> {
   }
 
   Widget _buildPlayPauseButton() {
-    return GestureDetector(
-      onTap: widget.onPlayPause,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: primaryRed,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: primaryRed.withAlpha(80),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: primaryRed,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: primaryRed.withAlpha(80),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: widget.onPlayPause,
+        style: ButtonStyle(
+          shape: const WidgetStatePropertyAll(CircleBorder()),
+          side: WidgetStateProperty.resolveWith((states) {
+            return BorderSide(
+              color: states.contains(WidgetState.focused)
+                  ? blackTextColor
+                  : Colors.transparent,
+              width: 2,
+            );
+          }),
         ),
-        child: Icon(
+        tooltip:
+            widget.isPlaying ? appLocalizations.pause : appLocalizations.play,
+        icon: Icon(
           widget.isPlaying ? Icons.pause : Icons.play_arrow,
           color: buttonTextColor,
           size: 24,
@@ -174,8 +184,10 @@ class _SensorControlsWidgetState extends State<SensorControlsWidget> {
         ),
         decoration: InputDecoration(
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 8,
+          ),
           hintText: appLocalizations.numberOfSampes,
         ),
         cursorColor: blackTextColor,
@@ -186,25 +198,34 @@ class _SensorControlsWidgetState extends State<SensorControlsWidget> {
   }
 
   Widget _buildLoopButton() {
-    return GestureDetector(
-      onTap: widget.onLoop,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: widget.isLooping
-              ? primaryRed.withAlpha(26)
-              : sensorStatusBackgroundColor,
-          border: Border.all(
-            color: widget.isLooping ? primaryRed : sensorStatusBorder,
-            width: 1,
+    return Semantics(
+      toggled: widget.isLooping,
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: IconButton(
+          onPressed: widget.onLoop,
+          tooltip: appLocalizations.loopMode,
+          padding: const EdgeInsets.all(6),
+          icon: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: widget.isLooping
+                  ? primaryRed.withAlpha(26)
+                  : sensorStatusBackgroundColor,
+              border: Border.all(
+                color: widget.isLooping ? primaryRed : sensorStatusBorder,
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(
+              Icons.all_inclusive,
+              color: widget.isLooping ? primaryRed : sensorControlIconColor,
+              size: 18,
+            ),
           ),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(
-          Icons.all_inclusive,
-          color: widget.isLooping ? primaryRed : sensorControlIconColor,
-          size: 18,
         ),
       ),
     );
@@ -229,23 +250,21 @@ class _SensorControlsWidgetState extends State<SensorControlsWidget> {
     required VoidCallback onTap,
     required String tooltip,
   }) {
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 36,
-          height: 36,
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onTap,
+        padding: const EdgeInsets.all(6),
+        icon: Container(
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: sensorStatusBackgroundColor,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: sensorStatusBorder),
           ),
-          child: Icon(
-            icon,
-            color: sensorControlIconColor,
-            size: 18,
-          ),
+          child: Icon(icon, color: sensorControlIconColor, size: 18),
         ),
       ),
     );
@@ -273,16 +292,32 @@ class _SensorControlsWidgetState extends State<SensorControlsWidget> {
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
               trackHeight: 2,
               valueIndicatorColor: primaryRed,
-              valueIndicatorTextStyle: const TextStyle(
-                fontSize: 12,
-              ),
+              valueIndicatorTextStyle: const TextStyle(fontSize: 12),
             ),
-            child: Slider(
-              value: widget.timegapMs.toDouble(),
-              min: 200,
-              max: 1000,
-              label: '${widget.timegapMs}${appLocalizations.ms}',
-              onChanged: (value) => widget.onTimegapChanged(value.toInt()),
+            child: MergeSemantics(
+              child: Semantics(
+                label: appLocalizations.timeGap,
+                value: '${widget.timegapMs} ${appLocalizations.ms}',
+                increasedValue:
+                    '${(widget.timegapMs + 100).clamp(200, 1000).toInt()} ${appLocalizations.ms}',
+                decreasedValue:
+                    '${(widget.timegapMs - 100).clamp(200, 1000).toInt()} ${appLocalizations.ms}',
+                onIncrease: () => widget.onTimegapChanged(
+                  (widget.timegapMs + 100).clamp(200, 1000).toInt(),
+                ),
+                onDecrease: () => widget.onTimegapChanged(
+                  (widget.timegapMs - 100).clamp(200, 1000).toInt(),
+                ),
+                child: Slider(
+                  value: widget.timegapMs.toDouble(),
+                  min: 200,
+                  max: 1000,
+                  label: '${widget.timegapMs}${appLocalizations.ms}',
+                  semanticFormatterCallback: (value) =>
+                      '${value.toInt()} ${appLocalizations.ms}',
+                  onChanged: (value) => widget.onTimegapChanged(value.toInt()),
+                ),
+              ),
             ),
           ),
         ),

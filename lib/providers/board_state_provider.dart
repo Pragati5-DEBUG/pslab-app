@@ -24,6 +24,7 @@ class BoardStateProvider extends ChangeNotifier {
   String pslabVersionID = 'Not Connected';
   String pslabVersionIDV6 = 'PSLab V6';
   String pslabVersionIDV5 = 'PSLab V5';
+  String pslabVersionIDMini = 'PSLab Pico';
   int pslabVersion = 0;
   int pslabFirmwareVersion = 0;
   bool _isProcessing = false;
@@ -31,6 +32,8 @@ class BoardStateProvider extends ChangeNotifier {
   String wifiHost = '192.168.4.1';
 
   final ValueNotifier<String?> legacyFirmwareNotifier = ValueNotifier(null);
+
+  final ValueNotifier<bool> unresponsiveDeviceNotifier = ValueNotifier(false);
 
   static const EventChannel _androidUsbEventChannel =
       EventChannel('io.pslab/usb_events');
@@ -98,18 +101,20 @@ class BoardStateProvider extends ChangeNotifier {
     final comms =
         ScienceLabCommon.communicationHandler as PSLabCommunicationHandler;
     List<String> ports = rust_api.getAvailablePorts();
+    bool anyPortFailedHandshake = false;
 
     for (String port in ports) {
+      bool portOpened = false;
       try {
         logger.d("Testing port $port for PSLab handshake...");
         comms.targetPortName = port;
-        bool portOpened = await scienceLabCommon.openDevice();
+        portOpened = await scienceLabCommon.openDevice();
 
         if (portOpened) {
           await setPSLabVersionIDs();
-
           if (pslabVersionID == pslabVersionIDV6 ||
-              pslabVersionID == pslabVersionIDV5) {
+              pslabVersionID == pslabVersionIDV5 ||
+              pslabVersionID == pslabVersionIDMini) {
             logger.i("Found PSLab on $port!");
             pslabIsConnected = true;
             await fetchFirmwareVersion();
@@ -118,18 +123,25 @@ class BoardStateProvider extends ChangeNotifier {
           } else {
             logger.w(
                 "Device on $port failed handshake. Closing and moving to next port...");
+            anyPortFailedHandshake = true;
             comms.close();
             _resetConnectionState();
           }
         }
       } catch (e) {
         logger.w("Exception while testing $port: $e");
+        if (portOpened && !pslabIsConnected) {
+          anyPortFailedHandshake = true;
+        }
         comms.close();
         _resetConnectionState();
       }
     }
 
     comms.targetPortName = null;
+    if (anyPortFailedHandshake) {
+      _reportUnresponsiveDevice();
+    }
     return false;
   }
 
@@ -199,18 +211,29 @@ class BoardStateProvider extends ChangeNotifier {
   }
 
   Future<void> _validateHandshake() async {
-    await setPSLabVersionIDs();
+    try {
+      await setPSLabVersionIDs();
+    } catch (e) {
+      logger.w("Version handshake threw: $e");
+      pslabVersion = 0;
+    }
 
     if (pslabVersion == 0 || pslabVersionID == 'Not Connected') {
       logger.w(
           "Port opened, but device failed the Version Handshake. Rejecting generic device.");
       _resetConnectionState();
+      _reportUnresponsiveDevice();
     } else {
       logger.i("Handshake successful: $pslabVersionID");
       pslabIsConnected = true;
       await fetchFirmwareVersion();
     }
     notifyListeners();
+  }
+
+  void _reportUnresponsiveDevice() {
+    unresponsiveDeviceNotifier.value = false;
+    unresponsiveDeviceNotifier.value = true;
   }
 
   void _resetConnectionState() {
@@ -225,7 +248,10 @@ class BoardStateProvider extends ChangeNotifier {
   Future<void> setPSLabVersionIDs() async {
     String rawVersion = await getIt.get<ScienceLab>().getVersion();
 
-    if (rawVersion == pslabVersionIDV6) {
+    if (rawVersion.contains(pslabVersionIDMini)) {
+      pslabVersionID = pslabVersionIDMini;
+      pslabVersion = 7;
+    } else if (rawVersion == pslabVersionIDV6) {
       pslabVersionID = pslabVersionIDV6;
       pslabVersion = 6;
     } else if (rawVersion == pslabVersionIDV5) {

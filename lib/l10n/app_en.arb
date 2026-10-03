@@ -281,6 +281,7 @@
     "roboticArmTitle": "Robotic Arm",
     "play": "Play",
     "pause": "Pause",
+    "loopMode": "Loop",
     "stop": "Stop",
     "controls": "Controls",
     "saveData": "Save Data",
@@ -564,6 +565,8 @@
     "distanceUnitLabel": "mm",
     "legacyFirmwareAlertTitle": "Legacy Firmware Detected",
     "legacyFirmwareAlertMessage": "We have detected that your PSLab device is running legacy firmware. Please note that support for this firmware has ended. For the best experience and continued support, please update your device to the latest firmware version.",
+    "unresponsiveDeviceAlertTitle": "PSLab Not Responding",
+    "unresponsiveDeviceAlertMessage": "A device was detected, but it did not respond like a PSLab. Check that it is running PSLab firmware, then reconnect it.",
     "holdPositionForPressure": "Hold position steady for stable pressure reading",
     "moveToHigherAltitude": "Move to a higher altitude or floor",
     "moveToLowerAltitude": "Move to a lower altitude or floor",
@@ -587,11 +590,19 @@
     "noLogsSelectedToShare": "Select at least one log to share.",
     "logsSelectedCount": "{count} selected",
     "@logsSelectedCount": {
+ fix/about-us-external-links
       "placeholders": {
         "count": {
           "type": "int"
         }
       }
+
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+main
     },
     "loggedData": "Logged Data",
     "oscilloscopeConfigs": "Oscilloscope Configurations",
@@ -964,5 +975,6 @@
     "filterInstrument" : "Filter Instruments",
     "allInstrument" : "All Instruments",
     "hardwareLimit" : "Hardware Limitation",
-    "hardwareLimitMessage" : "Generating analog and digital waveforms simultaneously on PSLab V5/V6 may cause distortion due to shared hardware pins (SI1/SQ4, SI2/SQ3)."
+    "hardwareLimitMessage" : "Generating analog and digital waveforms simultaneously on PSLab V5/V6 may cause distortion due to shared hardware pins (SI1/SQ4, SI2/SQ3).",
+    "pslabMini" : "PSLab Mini"
 }
